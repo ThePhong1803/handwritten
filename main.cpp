@@ -99,8 +99,7 @@ int main(int argc, char ** argv)
 	}
 
 	// Deallocate memory
-	for(size_t i = 0; i < input_data.size(); i++) delete [] input_data[i];
-	for(size_t i = 0; i < output_data.size(); i++) delete [] output_data[i];
-    for(size_t i = 0; i < labelVec.size(); i++) delete [] labelVec[i];
+	for(size_t i = 0; i < input_data.size(); i++) delete input_data[i];
+    for(size_t i = 0; i < labelVec.size(); i++) delete labelVec[i];
 	return 0;
 }
