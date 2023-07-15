@@ -105,8 +105,8 @@ void Image::loadImageData() {
 				int padding = (4 - ((this -> infoHeader.width * bytesPerPixel) % 4)) % 4;
 
 				//Loading the entire image pixels data into Buffer
-				char * Buffer = new char[this -> infoHeader.height * this -> infoHeader.width];
-				file.read(Buffer, this -> infoHeader.height * this -> infoHeader.width);
+				char * Buffer = new char[this -> infoHeader.imageSize];
+				file.read(Buffer, this -> infoHeader.imageSize);
 				std::vector<std::vector<int>> _pixels(this -> infoHeader.height, std::vector<int>(this -> infoHeader.width));
 
 				int dataIndex = 0;

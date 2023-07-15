@@ -3,16 +3,12 @@
 #include <vector>
 #include <iomanip>
 #include <time.h>
+#include <fstream>
 #include <image.h>
-//#include <neuralnetwork.h>
+#include <data.h>
+#include <neuralnetwork.h>
 
-#define MAX 100
-float addOne(float x){
-	return x + 1;
-}
 int main() {
-	srand(time(NULL));
-	Image img("dataset/training_dataset/00001.bmp", 1);
-	img.hexdump();
+	// use for testing library purpose
 	return 0;
 }

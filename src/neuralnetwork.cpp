@@ -136,14 +136,15 @@ void NeuralNetwork::propagateBackward(RowVector& output)
     }
 }
 
-void NeuralNetwork::train(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int batchSize)
+std::pair<float, float> NeuralNetwork::train(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int (*outputToLabelIdx)(RowVector*), int batchSize)
 {
 	float MSE = 0;
+	float ACC = 0;
 	for (int i = 0; i < batchSize; i++) {
 		int index = rand() % batchSize;
 		//this -> printNetwork();
 		// std::cout << "___________________________________________" << std::endl;
-        // std::cout << "Input to neural network is : " << *input_data[i] << std::endl;
+        // std::cout << "Input to neural network is : " << *input_data[index] << std::endl;
         propagateForward(*input_data[index]);
         // std::cout << "Expected output is : " << *output_data[index] << std::endl;
         propagateBackward(*output_data[index]);
@@ -152,8 +153,49 @@ void NeuralNetwork::train(std::vector<RowVector*> input_data, std::vector<RowVec
 		// std::cout << "___________________________________________" << std::endl;
 		// this -> printNetwork();
 		MSE += std::sqrt((*neuronLayers.back() - *output_data[index]).dot((*neuronLayers.back() - *output_data[index])) / neuronLayers.back()->size());
+		int output_num = outputToLabelIdx(neuronLayers.back());
+		int expected_num = outputToLabelIdx(output_data[index]);
+		if(output_num == expected_num) ACC++;
     }
-	MSE = MSE / batchSize;
+	MSE /= batchSize;
+	ACC /= batchSize;
 	// Validate model accuracy
 	std::cout << "MSE: " << MSE << std::endl;
+	return std::pair<float, float>(MSE, ACC);
+}
+
+std::pair<float, float> NeuralNetwork::validate(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int batchSize, int (*outputToLabelIdx)(RowVector*))
+{
+	/*
+		This function take the load test dataset, and validate the model performance,
+		it return a pair of float number, which is average accurage and average confident level
+		*/
+	float ACC = 0;
+	float CON = 0;
+	for (int i = 0; i < batchSize; i++) {
+		/*
+			Take one random element from test data and desired output data, out they are match, increase accuracy counter;
+			*/
+		std::cout << "===================================================================" << std::endl;
+		int index = rand() % batchSize;
+        propagateForward(*input_data[index]);
+        propagateBackward(*output_data[index]);
+		int output_num = outputToLabelIdx(neuronLayers.back());
+		int expected_num = outputToLabelIdx(output_data[index]);
+		float confidence = neuronLayers.back() -> coeff(output_num);
+		std::cout << "Actual output      : "<< output_num << " Confident: " << std::fixed << std::setprecision(2) << confidence << std::endl;
+		std::cout << "Expected output is : " << expected_num << std::endl;
+		std::cout << "Output vector:    " << *neuronLayers.back() << std::endl;
+		std::cout << "Expected vector : " << *output_data[index] << std::endl;
+		std::cout << "===================================================================" << std::endl;
+		
+		// update accuracy and confident level
+		if(output_num == expected_num) {
+			ACC++;
+			CON += confidence;
+		}
+    }
+	ACC /= batchSize;
+	CON /= batchSize;
+	return std::pair<float, float>(ACC, CON);
 }

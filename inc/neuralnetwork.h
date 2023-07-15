@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
+#include <fstream>
 
 // use typedefs for future ease for changing data types like : float to double
 typedef float Scalar;
@@ -31,9 +32,11 @@ public:
 	// function to update the weights of connections
 	void updateWeightsAndBiases();
 
-	// function to train the neural network give an array of data points
-	void train(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int batchSize);
+	// function to train the neural network give an array of data points and return MSE (RMSE acttualy)
+	std::pair<float, float> train(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int (*outputToLabelIdx)(RowVector*), int batchSize);
 
+	// function to validate the neural network, return the accuracy of the model
+	std::pair<float, float> validate(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int batchSize, int (*outputToLabelIdx)(RowVector*));
 	// storage objects for working of neural network
 	/*
 		use pointers when using std::vector<Class> as std::vector<Class> calls destructor of
