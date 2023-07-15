@@ -1,10 +1,12 @@
-// NeuralNetwork.h
-#pragma once
+#ifndef __NEURAL_NETWORK_H__
+#define __NEURAL_NETWORK_H__
+
 #include <eigen3/Eigen/Eigen>
 #include <iostream>
 #include <vector>
 #include <iomanip>
 #include <fstream>
+#pragma once
 
 // use typedefs for future ease for changing data types like : float to double
 typedef float Scalar;
@@ -13,11 +15,18 @@ typedef Eigen::RowVectorXf RowVector;
 typedef Eigen::VectorXf ColVector;
 typedef uint32_t uint;
 
+// activation fucntion prototype
+
+Scalar Sigmoid(Scalar x);
+Scalar dSigmoid(Scalar x);
+Scalar ReLU(Scalar x);
+Scalar dReLU(Scalar x);
+
 // neural network implementation class!
 class NeuralNetwork {
 public:
 	// constructor
-	NeuralNetwork(std::vector<uint> topology, Scalar learningRate = Scalar(0.005));
+	NeuralNetwork(std::vector<uint> topology, std::vector<std::pair<Scalar (*)(Scalar), Scalar (*)(Scalar)>> actFunPtr, Scalar learningRate = Scalar(0.005));
 	~NeuralNetwork();
 
 	// function for forward propagation of data
@@ -26,17 +35,17 @@ public:
 	// function for backward propagation of errors made by neurons
 	void propagateBackward(RowVector& output);
 
-	// function to calculate errors made by neurons in each layer
-	void calcErrors(RowVector& output);
-
-	// function to update the weights of connections
-	void updateWeightsAndBiases();
+	// function for update weights and bias matrices
+	void updateWeightsAndBias(int batchSize);
 
 	// function to train the neural network give an array of data points and return MSE (RMSE acttualy)
 	std::pair<float, float> train(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int (*outputToLabelIdx)(RowVector*), int batchSize);
 
+	// function to validate after each training batch
+	std::pair<float, float> validateTrain(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int batchSize, int num, int (*outputToLabelIdx)(RowVector*));
+
 	// function to validate the neural network, return the accuracy of the model
-	std::pair<float, float> validate(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int batchSize, int (*outputToLabelIdx)(RowVector*));
+	std::pair<float, float> validate(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data, int batchSize, int num, int (*outputToLabelIdx)(RowVector*));
 	// storage objects for working of neural network
 	/*
 		use pointers when using std::vector<Class> as std::vector<Class> calls destructor of
@@ -44,41 +53,15 @@ public:
 		it also makes our neural network class less heavy!! It would be nice if you can use
 		smart pointers instead of usual ones like this
 		*/
-	std::vector<RowVector*> neuronLayers; // stores the different layers of out network
-	std::vector<RowVector*> cachesLayers; // stores the unactivated (activation fn not yet applied) values of layers
-	std::vector<RowVector*> layersError;  // stores the error contribution of each neurons
-	std::vector<Matrix*> 	weights; 	  // the connection weights itself
-	std::vector<Matrix*> 	dweights;	  // store the average change of weights matrix, and will be apply to the weights matrix after a batch training
-	std::vector<RowVector*> bias;		  // store the bias value for all layers except input layers
-	std::vector<uint> 		topology;	  // network topology configuraton vector
+	std::vector<RowVector*> 		neuronLayers; // stores the different layers of out network
+	std::vector<RowVector*> 		cachesLayers; // stores the unactivated (activation fn not yet applied) values of layers
+	std::vector<std::pair<Scalar (*)(Scalar), Scalar (*)(Scalar)>> 	actFunPtr; //  // stores function pointer for activation of each layer except input layer
+	std::vector<Matrix*> 			weights; 	  // the connection weights itself
+	std::vector<Matrix*> 			dweights;	  // store the average change of weights matrix value, and will be apply to the weights matrix after a batch training
+	std::vector<RowVector*> 		bias;		  // store the bias value for all layers except input layers
+	std::vector<RowVector*> 		dbias;		  // store the average change of bias matrix value for all layers except input layers
+	std::vector<uint> 				topology;	  // network topology configuraton vector
 	Scalar learningRate;
-
-
-	void printNetwork(){
-		for(uint i = 0; i < neuronLayers.size(); i++){
-			std::cout << "Neuron layer: " << i << std::endl;
-			std::cout << *neuronLayers[i] << std::endl;
-		}
-
-		for(uint i = 0; i < cachesLayers.size(); i++){
-			std::cout << "Caches layer: " << i << std::endl;
-			std::cout << *cachesLayers[i] << std::endl;
-		}
-
-		for(uint i = 0; i < layersError.size(); i++){
-			std::cout << "Layer errors: " << i << std::endl;
-			std::cout << *layersError[i] << std::endl;
-		}
-
-		for(uint i = 0; i < weights.size(); i++){
-			std::cout << "Weight layer: " << i << std::endl;
-			std::cout << *weights[i] << std::endl;
-			std::cout << "dWeight layer: " << i << std::endl;
-			std::cout << *dweights[i] << std::endl;
-		}
-		for(uint i = 0; i < bias.size(); i++){
-			std::cout << "Bias layer: " << i << std::endl;
-			std::cout << *bias[i] << std::endl;
-		}
-	}
 };
+
+#endif

@@ -11,7 +11,7 @@ void loadBatches(   std::vector<RowVector*> &input_data,             // input da
                     std::vector<RowVector*> &output_data,            // output data
                     std::vector<RowVector>  &targetOutputs,          // target output for mapping
                     std::vector<int*>       &labelVec,               // label vector for mapping
-                    int batch                                       // batch size of the training
+                    int batch                                        // batch size of the training
                 )
 {
     /* - Loading image data into data container */
@@ -30,7 +30,7 @@ void loadBatches(   std::vector<RowVector*> &input_data,             // input da
 	}
 }
 
-void loadTestData(   std::vector<RowVector*> &input_data,             // input data
+void loadTestData(  std::vector<RowVector*> &input_data,            // input data
                     std::vector<RowVector*> &output_data,            // output data
                     std::vector<RowVector>  &targetOutputs,          // target output for mapping
                     std::vector<int*>       &labelVec,               // label vector for mapping
@@ -128,22 +128,36 @@ int main(int argc, char ** argv)
 			}
 		}
 	}
-	
+	/* Prepare ativation fucntion vecot and topology vector*/
+	std::vector<uint32_t> 			topology = {784, 16, 16, 10};						// for 28 x 28 pixel bit map images
+	std::vector<std::pair<Scalar (*)(Scalar), Scalar (*)(Scalar)>>	actFunPtr = {
+		std::pair<Scalar (*)(Scalar), Scalar (*)(Scalar)>(ReLU	 , dReLU),				// hidden layer 1
+		std::pair<Scalar (*)(Scalar), Scalar (*)(Scalar)>(ReLU	 , dReLU   ),			// hidden layer 2
+ 		std::pair<Scalar (*)(Scalar), Scalar (*)(Scalar)>(Sigmoid, dSigmoid),			// output layer
+	};
 	/* - Training with loaded data */
-	NeuralNetwork NN({784, 16, 16, 10}, learnRate);
+	NeuralNetwork NN(topology, actFunPtr, learnRate);
 	std::ofstream log("./log/RMSE.txt");
 	log << "RMSE" << " " << "ACC" << '\n';
 	for(int i = 0; i < epoch; i++){
         loadBatches(input_data, output_data, targetOutputs, labelVec, batch);
-		std::pair<float, float> res = NN.train(input_data, output_data, outputToLabelIdx, batch);
-		log << res.first << " " << res.second << '\n';
-		std::cout << "Epoch : " << i << std::endl;
+		// return <MSE , ACC> in the training period
+		std::pair<float, float> resTrain = NN.train(input_data, output_data, outputToLabelIdx, batch);
+		loadTestData(input_data, output_data, targetOutputs, validateLabels, batch);
+
+		// return <ACC , CON> in the valiadate period
+		std::pair<float, float> resValid = NN.validateTrain(input_data, output_data, batch, 100, outputToLabelIdx);
+
+		// log the training MSE and validated ACC
+		log << resTrain.first << " " << resValid.first << '\n';
+		std::cout << "\rEpoch : " << i << " MSE: " << resTrain.first;
 	}
+	std::cout << std::endl;
 	log.close();
 
 	/* - Calculate model accuracy */
 	loadTestData(input_data, output_data, targetOutputs, validateLabels, batch);
-	std::pair<float, float> validate = NN.validate(input_data, output_data, batch, outputToLabelIdx);
+	std::pair<float, float> validate = NN.validate(input_data, output_data, batch, 100, outputToLabelIdx);
 	std::cout << "Model average accuracy  : " << validate.first << std::endl;
 	std::cout << "Model average confident : " << validate.second << std::endl;
 	std::cout << "===========================================================" << std::endl;
@@ -151,7 +165,7 @@ int main(int argc, char ** argv)
 	std::string cmd = "";
 	while(cmd != "exit"){
 		// get test sample
-		Image img("test/test.bmp", 11);
+		Image img("test_data/test.bmp", 11);
         img.setInvert(false);
 		Data obj(0, 0, img.getPixelArray());
 		RowVector testData(img.getHeight() * img.getWidth());
@@ -166,7 +180,8 @@ int main(int argc, char ** argv)
 	}
 
 	// Deallocate memory
-	for(size_t i = 0; i < input_data.size(); i++) delete input_data[i];
-    for(size_t i = 0; i < labelVec.size(); i++) delete labelVec[i];
+	for(size_t i = 0; i < input_data.size()    ; i++) delete input_data[i];
+    for(size_t i = 0; i < labelVec.size()      ; i++) delete labelVec[i];
+	for(size_t i = 0; i < validateLabels.size(); i++) delete validateLabels[i];
 	return 0;
 }
