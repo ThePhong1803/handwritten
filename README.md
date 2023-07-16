@@ -8,7 +8,7 @@ Handwritten digit recognition, using a very basic neural network
 - To exit test loop, type "exit" and hit enter.
 - For easy while using paint, the setInvert() take True value. For the image is the same as type as training data, clear invert flag.
 # Training and testing result
-RMSE and accuracy over epoch (learning rate = 0.1, epoch = 9000, batch = 100)
+Training RMSE, Validate RMSE and accuracy over epoch (learning rate = 0.1, epoch = 9000, batch = 100)
 ![alt text](https://github.com/ThePhong1803/handwritten/blob/master/Rplotter/train_result.png)
 
 # Reference materials
