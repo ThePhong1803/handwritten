@@ -103,7 +103,8 @@ int main(int argc, char ** argv)
     int label;
     while(labelFile >> label){
         labelVec.push_back(new int(label));
-    }   
+    }
+	labelFile.close();   
 
 	std::vector<int*> validateLabels;
     std::ifstream validateLabelsFile;
@@ -116,7 +117,8 @@ int main(int argc, char ** argv)
     int testLabel;
     while(validateLabelsFile >> testLabel){
         validateLabels.push_back(new int(testLabel));
-    } 
+    }
+	validateLabelsFile.close(); 
 	/* - Mapping the expected output data to the output data container */
 	for(int i = 0; i < 10; i++){
 		for(int j = 0; j < 10; j++){
@@ -136,10 +138,12 @@ int main(int argc, char ** argv)
  		std::pair<Scalar (*)(Scalar), Scalar (*)(Scalar)>(Sigmoid, dSigmoid),			// output layer
 	};
 	/* - Training with loaded data */
+	srand(time(NULL));
 	NeuralNetwork NN(topology, actFunPtr, learnRate);
 	std::ofstream log("./log/RMSE.txt");
-	log << "RMSE" << " " << "ACC" << '\n';
+	log << "RMSE" << " " << "ACC" << " " << "MSR_Validate" << '\n';
 	for(int i = 0; i < epoch; i++){
+		srand(time(NULL));
         loadBatches(input_data, output_data, targetOutputs, labelVec, batch);
 		// return <MSE , ACC> in the training period
 		std::pair<float, float> resTrain = NN.train(input_data, output_data, outputToLabelIdx, batch);
@@ -149,15 +153,15 @@ int main(int argc, char ** argv)
 		std::pair<float, float> resValid = NN.validateTrain(input_data, output_data, batch, 100, outputToLabelIdx);
 
 		// log the training MSE and validated ACC
-		log << resTrain.first << " " << resValid.first << '\n';
-		std::cout << "\rEpoch : " << i << " MSE: " << resTrain.first;
+		log << resTrain.first << " " << resValid.first << " " << resValid.second << '\n';
+		std::cout << "\rEpoch : " << i + 1 << " MSE: " << resTrain.first;
 	}
 	std::cout << std::endl;
 	log.close();
 
 	/* - Calculate model accuracy */
 	loadTestData(input_data, output_data, targetOutputs, validateLabels, batch);
-	std::pair<float, float> validate = NN.validate(input_data, output_data, batch, 100, outputToLabelIdx);
+	std::pair<float, float> validate = NN.validate(input_data, output_data, batch, 1000, outputToLabelIdx);
 	std::cout << "Model average accuracy  : " << validate.first << std::endl;
 	std::cout << "Model average confident : " << validate.second << std::endl;
 	std::cout << "===========================================================" << std::endl;

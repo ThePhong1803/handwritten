@@ -188,7 +188,7 @@ std::pair<float, float> NeuralNetwork::validate(std::vector<RowVector*> input_da
 		std::cout << "===================================================================" << std::endl;
 		int index = rand() % batchSize;
         propagateForward(*input_data[index]);
-		int output_num = outputToLabelIdx(neuronLayers.back());
+		int output_num   = outputToLabelIdx(neuronLayers.back());
 		int expected_num = outputToLabelIdx(output_data[index]);
 		float confidence = neuronLayers.back() -> coeff(output_num);
 		std::cout << "Actual output      : "<< output_num << " Confident: " << std::fixed << std::setprecision(2) << confidence << std::endl;
@@ -215,7 +215,8 @@ std::pair<float, float> NeuralNetwork::validateTrain(std::vector<RowVector*> inp
 		it return a pair of float number, which is average accurage and average confident level
 		*/
 	float ACC = 0;
-	float CON = 0;
+	float MSE = 0;
+	// float CON = 0;
 	for (int i = 0; i < num; i++) {
 		/*
 			Take one random element from test data and desired output data, out they are match, increase accuracy counter;
@@ -224,15 +225,15 @@ std::pair<float, float> NeuralNetwork::validateTrain(std::vector<RowVector*> inp
         propagateForward(*input_data[index]);
 		int output_num = outputToLabelIdx(neuronLayers.back());
 		int expected_num = outputToLabelIdx(output_data[index]);
-		float confidence = neuronLayers.back() -> coeff(output_num);
-		
+		//float confidence = neuronLayers.back() -> coeff(output_num);
+		MSE += std::sqrt((*neuronLayers.back() - *output_data[index]).dot((*neuronLayers.back() - *output_data[index])) / neuronLayers.back()->size());
 		// update accuracy and confident level
 		if(output_num == expected_num) {
 			ACC++;
-			CON += confidence;
 		}
+		
     }
 	ACC /= num;
-	CON /= num;
-	return std::pair<float, float>(ACC, CON);
+	MSE /= num;
+	return std::pair<float, float>(ACC, MSE);
 }
