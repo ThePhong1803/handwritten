@@ -1,4 +1,4 @@
-# Script to generate training error
+# Script to generate training errorw
 dataframe <- read.csv("C:/Users/PC/Desktop/NN/log/RMSE.txt", sep="")
 plot(dataframe[,1], type = 'l', xlab = "Epoch", ylab = "RMSE/ACC", col = "blue", ylim = c(0,1))
 lines(dataframe[,2], type = 'l', xlab = "Epoch", ylab = "RMSE/ACC", col = "red")
